@@ -34,10 +34,10 @@ def handle_message(message):
     return f, a
 
 
-def loop(bot, offset=0, limit=100):
+def loop(bot, offset=0, limit=100, timeout=15):
     logger = logging.getLogger('bot')
     while 1:
-        response = tgbot.getUpdates(offset, limit)
+        response = tgbot.getUpdates(offset, limit, timeout)
         if not response['ok']:
             logger.warning('getUpdates: %s', response['description'])
             continue
