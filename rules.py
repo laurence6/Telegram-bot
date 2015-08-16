@@ -6,11 +6,13 @@ import handlers
 
 
 class RULE(list):
-    def get(self, string):
+    def get(self, string, default=None):
         for r in self:
             search = r[0].search(string)
             if search:
-                return r[1](**search.groupdict())
+                return r[1](**dict(search.groupdict(), **r[2]))
+        else:
+            return default
 
 
 def rule(pattern, function, **args):
@@ -22,9 +24,9 @@ text_rule = RULE([
     rule('^/help', handlers.help),
     rule('^/start', handlers.start),
     rule('^/say$', handlers.sayhello),
-    rule('^/say (?P<text>.*)$', handlers.say),
+    rule('^/say (?P<text>[\s\S]*)$', handlers.say),
     rule('.*', handlers.unknown),
 ])
 audio_rule = RULE([
-    rule('.*', handlers.sayhello),
+    rule('[\s\S]*', handlers.sayhello),
 ])
