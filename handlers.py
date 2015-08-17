@@ -6,7 +6,7 @@ import io
 import bdvoice
 
 
-logger = logging.getLogger('handlers')
+logger = logging.getLogger('bot.handlers')
 try:
     with open('bdvoicetoken') as f:
         token = f.read().rstrip()

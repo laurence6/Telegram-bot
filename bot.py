@@ -16,6 +16,8 @@ def handle_message(message):
     chat_id = message['chat']['id']
     message_id = message['message_id']
     sendtime = message['date']
+    f = None
+    a = {}
 
     if 'text' in message:
         text = message['text']
@@ -54,21 +56,22 @@ def loop(bot, offset=0, limit=100, timeout=15):
                 time.sleep(10)
         else:
             time.sleep(30)
-            continue
 
 
 if __name__ == '__main__':
+    logger = logging.getLogger('bot')
     try:
         with open('tgtoken') as f:
             token = f.read().rstrip()
             if not token:
-                logging.critical('Telegram token is required')
+                logger.critical('Telegram token is required')
                 exit()
             tgbot = tgbotapi.BOT(token)
+        sessions = {}
         loop(tgbot)
     except KeyboardInterrupt:
-        logging.info('Keyboard interrupt received')
+        logger.info('Keyboard interrupt received')
         exit()
     except FileNotFoundError:
-        logging.critical('Telegram token file not found')
+        logger.critical('Telegram token file not found')
         exit()
