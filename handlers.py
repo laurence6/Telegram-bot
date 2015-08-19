@@ -35,7 +35,7 @@ def start(**args):
 
 
 def sayhello(**args):
-    return 'sendAudio', {'audio':'AwADBQADBAADSt0PB4a5C-Prm7oKAg'}
+    return 'sendAudio', {'audio':'AwADBQADUQADSt0PB2rFIs3sIl4VAg'}
 
 
 def say(**args):

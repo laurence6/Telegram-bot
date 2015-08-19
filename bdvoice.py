@@ -1,4 +1,4 @@
-#! /usr/bin/python3
+'''Baidu voice API'''
 
 import logging
 import requests
@@ -13,7 +13,7 @@ class BDVOICE(object):
     def __init__(self, token):
         self.tok = token
 
-    def get_audio_from_text(self, tex, cuid='1000', lan='zh', ctp=1, spd=6, pit=4, vol=9, per=1):
+    def get_audio_from_text(self, tex, cuid='1000', lan='zh', ctp=1, spd=5, pit=6, vol=9, per=0):
         self.logger.debug(locals())
         return requests.post(self.taurl,\
                 params={'tok':self.tok, 'cuid':cuid, 'lan':lan, 'ctp':ctp, 'spd':spd, 'pit':pit, 'vol':vol, 'per':per, 'tex':tex}).content
