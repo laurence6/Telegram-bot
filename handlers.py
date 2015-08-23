@@ -3,20 +3,11 @@
 import logging
 import io
 
-import bdvoice
+from base import voice
 
 
 logger = logging.getLogger('bot.handlers')
-try:
-    with open('bdvoicetoken') as f:
-        token = f.read().rstrip()
-        if not token:
-            logger.critical('Bdvoice token is required')
-            exit()
-        voice = bdvoice.BDVOICE(token)
-except FileNotFoundError:
-    logger.critical('Bdvoice token file not found')
-    exit()
+
 
 def unknown(**args):
     return 'sendPhoto', {'photo':'AgADBQADrKcxGzZ5NgZi9Dn3WRmEFnPksTIABNjitpp_sm1i9vsAAgI', 'caption':'Speak English please. 喵?', 'reply_to_message_id':True}
@@ -35,8 +26,8 @@ def start(**args):
 
 
 def sayhello(**args):
-    return 'sendAudio', {'audio':'AwADBQADUQADSt0PB2rFIs3sIl4VAg'}
+    return 'sendAudio', {'audio':'AwADBQADUQADSt0PB2rFIs3sIl4VAg', 'reply_to_message_id':True}
 
 
 def say(**args):
-    return 'sendAudio', {'audio':('mp3', io.BytesIO(voice.get_audio_from_text(args['text'])))}
+    return 'sendAudio', {'audio':('mp3', io.BytesIO(voice.get_audio_from_text(args['text']))), 'reply_to_message_id':True}
