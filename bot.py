@@ -30,6 +30,8 @@ def handle_message(message):
             f, a = text_rule.get(text)
         elif 'photo' in message:
             pass
+        elif 'voice' in message:
+            f, a = audio_rule.get('')
         elif 'audio' in message:
             f, a = audio_rule.get('')
         elif 'video' in message:

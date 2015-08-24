@@ -1,4 +1,4 @@
-'''The telegram bot API'''
+'''Telegram bot API'''
 
 import requests
 
@@ -25,19 +25,19 @@ class BOT(object):
         elif isinstance(photo, (list, tuple)):
             return requests.post(self.baseurl+'sendPhoto', params={'chat_id': chat_id,                 'caption': caption, 'reply_to_message_id': reply_to_message_id, 'reply_markup': reply_markup}, files={'photo', photo}).json()
 
-    def sendAudio(self, chat_id, audio, reply_to_message_id=None, reply_markup=None):
+    def sendAudio(self, chat_id, audio, duration=None, performer=None, title=None, reply_to_message_id=None, reply_markup=None):
         '''https://core.telegram.org/bots/api#sendaudio'''
         if isinstance(audio, str):
-            return requests.post(self.baseurl+'sendAudio', params={'chat_id': chat_id, 'audio': audio, 'reply_to_message_id': reply_to_message_id, 'reply_markup': reply_markup}).json()
+            return requests.post(self.baseurl+'sendAudio', params={'chat_id': chat_id, 'audio': audio, 'duration': duration, 'performer': performer, 'title': title, 'reply_to_message_id': reply_to_message_id, 'reply_markup': reply_markup}).json()
         elif isinstance(audio, (list, tuple)):
-            return requests.post(self.baseurl+'sendAudio', params={'chat_id': chat_id,                 'reply_to_message_id': reply_to_message_id, 'reply_markup': reply_markup}, files={'audio': audio}).json()
+            return requests.post(self.baseurl+'sendAudio', params={'chat_id': chat_id,                 'duration': duration, 'performer': performer, 'title': title, 'reply_to_message_id': reply_to_message_id, 'reply_markup': reply_markup}, files={'audio': audio}).json()
 
-    def sendVideo(self, chat_id, video, reply_to_message_id=None, reply_markup=None):
+    def sendVideo(self, chat_id, video, duration=None, caption=None, reply_to_message_id=None, reply_markup=None):
         '''https://core.telegram.org/bots/api#sendvideo'''
         if isinstance(video, str):
-            return requests.post(self.baseurl+'sendVideo', params={'chat_id': chat_id, 'video': video, 'reply_to_message_id': reply_to_message_id, 'reply_markup': reply_markup}).json()
+            return requests.post(self.baseurl+'sendVideo', params={'chat_id': chat_id, 'video': video, 'duration': duration, 'caption': caption, 'reply_to_message_id': reply_to_message_id, 'reply_markup': reply_markup}).json()
         elif isinstance(video, (list, tuple)):
-            return requests.post(self.baseurl+'sendVideo', params={'chat_id': chat_id,                 'reply_to_message_id': reply_to_message_id, 'reply_markup': reply_markup}, files={'video': video}).json()
+            return requests.post(self.baseurl+'sendVideo', params={'chat_id': chat_id,                 'duration': duration, 'caption': caption, 'reply_to_message_id': reply_to_message_id, 'reply_markup': reply_markup}, files={'video': video}).json()
 
     def sendDocument(self, chat_id, document, reply_to_message_id=None, reply_markup=None):
         '''https://core.telegram.org/bots/api#senddocument'''
