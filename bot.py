@@ -4,9 +4,6 @@
 import logging
 import time
 
-from tgbotapi import BOT
-from rules import text_rule, audio_rule
-
 
 def handle_message(message):
     logger = logging.getLogger('bot.loop.handle_message')
@@ -14,12 +11,12 @@ def handle_message(message):
     chat_id = message['chat']['id']
     message_id = message['message_id']
     sendtime = message['date']
-    f = None
-    a = {}
+    message_info = {'from_id':from_id, 'chat_id':chat_id,\
+            'message_id':message_id, 'sendtime':sendtime}
 
     try:
         if sessions[from_id][chat_id] == 'Deny':
-            return f, a
+            return
     except KeyError:
         sessions[from_id] = {}
         sessions[from_id][chat_id] = 'OK'
@@ -27,24 +24,17 @@ def handle_message(message):
     try:
         if 'text' in message:
             text = message['text']
-            f, a = text_rule.get(text)
+            return text_rule.handle(text, message_info)
         elif 'photo' in message:
             pass
         elif 'voice' in message:
-            f, a = audio_rule.get('')
+            return audio_rule.handle('', message_info)
         elif 'audio' in message:
-            f, a = audio_rule.get('')
+            return audio_rule.handle('', message_info)
         elif 'video' in message:
             pass
         elif 'document' in message:
             pass
-
-        if f:
-            a['chat_id'] = chat_id
-            a['reply_to_message_id'] = message_id if 'reply_to_message_id' in a else None
-            r = getattr(bot, f)(**a)
-            if not r['ok']:
-                logger.error(f, a)
     except Exception as e:
         logger.error(e)
 
@@ -74,23 +64,14 @@ def loop(offset=0, limit=100, timeout=15):
 def main():
     logger = logging.getLogger('bot')
     try:
-        global bot, sessions
-        with open('tgtoken') as f:
-            token = f.read().rstrip()
-            if not token:
-                logger.critical('Telegram token is required')
-                exit()
-        bot = BOT(token)
-        sessions = {}
         loop()
     except KeyboardInterrupt:
         logger.info('Keyboard interrupt received')
-        exit()
-    except FileNotFoundError:
-        logger.critical('Telegram token file not found')
         exit()
 
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s [%(levelname)-5.5s] %(module)s.%(funcName)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S', level=logging.INFO)
+    from base import bot, sessions
+    from rules import text_rule, audio_rule
     main()
