@@ -1,8 +1,8 @@
 # telegrambot
 
-A telegram bot and telegram bot API written in python3.
+A telegram bot framework
 
-The API document is at <a href="https://core.telegram.org/bots/api">https://core.telegram.org/bots/api</a>
+The telegram bot API document is at <a href="https://core.telegram.org/bots/api">https://core.telegram.org/bots/api</a>
 
 # License
 

@@ -2,8 +2,10 @@
 
 import requests
 
+from telegram.conf.settings import SETTINGS
 
-class BOT(object):
+
+class Bot(object):
     '''
     File: tuple(str(filetype), file_like_object(content)) or list(str(filetype), file_like_object(content))
     '''
@@ -106,3 +108,6 @@ class BOT(object):
                                      'longitude': longitude,
                                      'reply_to_message_id': reply_to_message_id,
                                      'reply_markup': reply_markup}).json()
+
+
+BOT = Bot(SETTINGS.TELEGRAM_BOT_TOKEN)
