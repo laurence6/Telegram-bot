@@ -5,10 +5,10 @@ import time
 
 from telegram.conf.settings import SETTINGS
 from telegram.core.bot import BOT
-from telegram.core.message import Request_Message, Response_Message
+from telegram.core.message import RequestMessage, ResponseMessage
 
 
-class Handle_Message(multiprocessing.Process):
+class HandleMessage(multiprocessing.Process):
     def __init__(self, queue):
         multiprocessing.Process.__init__(self)
         self.queue = queue
@@ -47,7 +47,6 @@ class Handle_Message(multiprocessing.Process):
                     response = middleware(request)
                     if not response is None:
                         break
-
                 if response is None:
                     handler, handler_args = self.resolver(request)
                     for middleware in self.handler_middleware:
@@ -61,7 +60,7 @@ class Handle_Message(multiprocessing.Process):
                 for middleware in self.response_middleware:
                     response = middleware(request, response)
 
-                if isinstance(response, Response_Message):
+                if isinstance(response, ResponseMessage):
                     getattr(BOT, response.method)(**response)
         except KeyboardInterrupt:
             return
@@ -69,7 +68,7 @@ class Handle_Message(multiprocessing.Process):
             logger.error(e)
 
 
-class Get_Updates(multiprocessing.Process):
+class GetUpdates(multiprocessing.Process):
     def __init__(self, queue):
         multiprocessing.Process.__init__(self)
         self.queue = queue
@@ -88,7 +87,7 @@ class Get_Updates(multiprocessing.Process):
                 result = response['result']
                 if result:
                     for r in result:
-                        self.queue.put(Request_Message(r['message']))
+                        self.queue.put(RequestMessage(r['message']))
                     offset = result[-1]['update_id']+1
                     if len(result) < limit:
                         time.sleep(10)
@@ -105,9 +104,9 @@ def execute():
     logger = logging.getLogger('execute')
     try:
         queue = multiprocessing.Queue()
-        processed = [Get_Updates(queue)]
+        processed = [GetUpdates(queue)]
         for i in range(SETTINGS.WORKER_PROCESSES):
-            processed.append(Handle_Message(queue))
+            processed.append(HandleMessage(queue))
         for i in processed:
             i.start()
         for i in processed:
