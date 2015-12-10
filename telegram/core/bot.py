@@ -10,6 +10,7 @@ class Bot(object):
     File: tuple(str(filetype), file_like_object(content)) or list(str(filetype), file_like_object(content))
     '''
     def __init__(self, token):
+        self.token = token
         self.baseurl = 'https://api.telegram.org/bot%s/' % token
 
     def getUpdates(self, offset=0, limit=100, timeout=0):
@@ -108,6 +109,12 @@ class Bot(object):
                                      'longitude': longitude,
                                      'reply_to_message_id': reply_to_message_id,
                                      'reply_markup': reply_markup}).json()
+
+    def getFile(self, file_id):
+        '''https://core.telegram.org/bots/api#getfile'''
+        response = requests.get(self.baseurl+'getFile',
+                                params={'file_id': file_id}).json()
+        return requests.get('https://api.telegram.org/file/bot%s/%s' % (self.token, response['result']['file_path'])).content
 
 
 BOT = Bot(SETTINGS.TELEGRAM_BOT_TOKEN)
