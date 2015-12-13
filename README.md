@@ -1,6 +1,6 @@
 # telegrambot
 
-A telegram bot framework
+A multiprocess and extensible telegram bot framework
 
 The telegram bot API document is at <a href="https://core.telegram.org/bots/api">https://core.telegram.org/bots/api</a>
 
