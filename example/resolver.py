@@ -26,7 +26,7 @@ TEXT_RULE = Rule([
     rule('^/start', handlers.start),
     rule('^/say$', handlers.sayhello),
     rule('^/say (?P<text>[\s\S]*)$', handlers.say),
-    rule('.*', handlers.unknown),
+    rule('[\s\S]*', handlers.unknown),
 ])
 AUDIO_RULE = Rule([
     rule('[\s\S]*', handlers.sayhello),

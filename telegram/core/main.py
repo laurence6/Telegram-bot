@@ -1,45 +1,89 @@
 import importlib
 import logging
-import multiprocessing
-import time
+import threading
 
 from telegram.conf.settings import SETTINGS
 from telegram.core.bot import BOT
 from telegram.core.message import RequestMessage, ResponseMessage
 
 
-class HandleMessage(multiprocessing.Process):
+class RequestQueue(object):
+    def __init__(self):
+        self.requests_list = []
+        self.requests_list_condition = threading.Condition(threading.Lock())
+        self.processing = []
+        self.processing_lock = threading.Lock()
+
+    def get(self):
+        while 1:
+            if self.requests_list == []:
+                with self.requests_list_condition:
+                    self.requests_list_condition.wait()
+            with self.requests_list_condition:
+                for n, i in enumerate(self.requests_list):
+                    message_id = '%s%s' % (i['chat']['id'], i['from']['id'])
+                    with self.processing_lock:
+                        if not message_id in self.processing:
+                            self.processing.append(message_id)
+                            ret = self.requests_list.pop(n)
+                            return ret
+                self.requests_list_condition.wait()
+
+    def done(self, message_id):
+        with self.processing_lock:
+            self.processing.remove(message_id)
+        with self.requests_list_condition:
+            self.requests_list_condition.notify_all()
+
+    def put(self, request):
+        self.requests_list.append(request)
+        with self.requests_list_condition:
+            self.requests_list_condition.notify_all()
+
+
+def load_resolver():
+    resolver_mod = importlib.import_module(SETTINGS.RESOLVER)
+    global resolver
+    resolver = getattr(resolver_mod, 'resolve')
+
+
+def load_middleware():
+    global request_middleware
+    global handler_middleware
+    global response_middleware
+    request_middleware = []
+    handler_middleware = []
+    response_middleware = []
+    for middleware in SETTINGS.MIDDLEWARES:
+        mw_mod, mw_class = middleware.rsplit('.', 1)
+        mw_mod = importlib.import_module(mw_mod)
+        mw_class = getattr(mw_mod, mw_class)
+        mw = mw_class()
+        if hasattr(mw, 'process_request'):
+            request_middleware.append(mw.process_request)
+        if hasattr(mw, 'process_handler'):
+            handler_middleware.append(mw.process_handler)
+        if hasattr(mw, 'process_response'):
+            response_middleware.insert(0, mw.process_response)
+
+
+class HandleMessage(threading.Thread):
     def __init__(self, queue):
-        multiprocessing.Process.__init__(self)
+        threading.Thread.__init__(self)
         self.queue = queue
-        self.load_resolver()
-        self.load_middleware()
-
-    def load_resolver(self):
-        resolver_mod = importlib.import_module(SETTINGS.RESOLVER)
-        self.resolver = getattr(resolver_mod, 'resolve')
-
-    def load_middleware(self):
-        self.request_middleware = []
-        self.handler_middleware = []
-        self.response_middleware = []
-        for middleware in SETTINGS.MIDDLEWARES:
-            mw_mod, mw_class = middleware.rsplit('.', 1)
-            mw_mod = importlib.import_module(mw_mod)
-            mw_class = getattr(mw_mod, mw_class)
-            mw = mw_class()
-            if hasattr(mw, 'process_request'):
-                self.request_middleware.append(mw.process_request)
-            if hasattr(mw, 'process_handler'):
-                self.handler_middleware.append(mw.process_handler)
-            if hasattr(mw, 'process_response'):
-                self.response_middleware.insert(0, mw.process_response)
+        load_resolver()
+        self.resolver = globals()['resolver']
+        load_middleware()
+        self.request_middleware = globals()['request_middleware']
+        self.handler_middleware = globals()['handler_middleware']
+        self.response_middleware = globals()['response_middleware']
 
     def run(self):
         logger = logging.getLogger('handle_message')
-        try:
-            while 1:
+        while 1:
+            try:
                 request = self.queue.get()
+                chat_and_from_id = '%s%s' % (request['chat']['id'], request['from']['id'])
 
                 response = None
 
@@ -62,24 +106,26 @@ class HandleMessage(multiprocessing.Process):
 
                 if isinstance(response, ResponseMessage):
                     getattr(BOT, response.method)(**response)
-        except KeyboardInterrupt:
-            return
-        except Exception as e:
-            logger.error(e)
+
+                self.queue.done(chat_and_from_id)
+            except KeyboardInterrupt:
+                return
+            except Exception as e:
+                logger.error(e)
 
 
-class GetUpdates(multiprocessing.Process):
+class GetUpdates(threading.Thread):
     def __init__(self, queue):
-        multiprocessing.Process.__init__(self)
+        threading.Thread.__init__(self)
         self.queue = queue
 
     def run(self):
         logger = logging.getLogger('get_updates')
         offset = 0
         limit = 100
-        timeout = 15
-        try:
-            while 1:
+        timeout = 60
+        while 1:
+            try:
                 response = BOT.getUpdates(offset, limit, timeout)
                 if not response['ok']:
                     logger.warning('getUpdates: %s', response['description'])
@@ -89,24 +135,21 @@ class GetUpdates(multiprocessing.Process):
                     for r in result:
                         self.queue.put(RequestMessage(r['message']))
                     offset = result[-1]['update_id']+1
-                    if len(result) < limit:
-                        time.sleep(10)
                 else:
                     logger.info('No new updates')
-                    time.sleep(30)
-        except KeyboardInterrupt:
-            return
-        except Exception as e:
-            logger.error(e)
+            except KeyboardInterrupt:
+                return
+            except Exception as e:
+                logger.error(e)
 
 
 def execute():
     logger = logging.getLogger('execute')
     try:
-        queue = multiprocessing.Queue()
-        processed = [GetUpdates(queue)]
+        request_queue = RequestQueue()
+        processed = [GetUpdates(request_queue)]
         for i in range(SETTINGS.WORKER_PROCESSES):
-            processed.append(HandleMessage(queue))
+            processed.append(HandleMessage(request_queue))
         for i in processed:
             i.start()
         for i in processed:
